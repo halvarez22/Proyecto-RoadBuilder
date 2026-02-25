@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion'
+
 const videos = [
   {
     src: '/videos/video_1_escarcificado.mp4',
@@ -25,32 +27,38 @@ export default function Videos() {
   return (
     <section
       id="videos"
-      className="py-16 bg-white/5 min-h-[calc(100vh-64px)] flex items-center scroll-mt-20"
+      className="py-16 md:py-24 bg-white/5 min-h-[calc(100vh-64px)] flex items-center scroll-mt-20"
     >
       <div className="mx-auto max-w-6xl px-4 w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold">Videos de Aplicación</h2>
-          <p className="text-slate-300">
+        <div className="text-center mb-10">
+          <h2 className="font-sans text-3xl font-extrabold text-white">Videos de Aplicación</h2>
+          <p className="mt-2 font-sans text-slate-300">
             Conozca cómo se aplican los productos RoadBuilder en obra real.
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
-          {videos.map((v) => (
-            <article
+          {videos.map((v, i) => (
+            <motion.div
               key={v.src}
-              className="rounded-xl border border-white/10 bg-black/40 overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+              className="h-full"
             >
-              <div className="relative w-full aspect-video">
-                <video
-                  src={v.src}
-                  controls
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              </div>
-              <div className="p-3 text-center">
-                <h3 className="text-sm font-semibold text-slate-100">{v.title}</h3>
-              </div>
-            </article>
+              <article className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 transition-all duration-300">
+                <div className="relative w-full aspect-video">
+                  <video
+                    src={v.src}
+                    controls
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+                <div className="p-6 text-center border-t border-white/10">
+                  <h3 className="font-sans text-sm font-semibold text-slate-100">{v.title}</h3>
+                </div>
+              </article>
+            </motion.div>
           ))}
         </div>
       </div>

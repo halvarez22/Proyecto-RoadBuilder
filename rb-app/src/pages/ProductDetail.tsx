@@ -202,35 +202,36 @@ export default function ProductDetail() {
   const p = (slug && PRODUCTS[slug]) || PRODUCTS['tsw']
 
   return (
-    <section className="py-12">
+    <section className="py-16">
       <div className="mx-auto max-w-5xl px-4 space-y-8">
-        <div className="rounded-xl overflow-hidden border border-white/10">
+        <div className="rounded-xl overflow-hidden border border-white/10 shadow-lg">
           <img src={p.img} alt={p.title} className="w-full aspect-[16/6] object-cover" />
         </div>
 
         <header>
-          <p className="text-sm font-semibold text-primary uppercase tracking-wide mb-1">
+          <p className="font-sans text-sm font-semibold text-primary uppercase tracking-wide mb-1">
             Solución RoadBuilder
           </p>
-          <h1 className="text-4xl font-extrabold mb-1">{p.title}</h1>
-          <h2 className="text-lg text-slate-200 mb-3">{p.subtitle}</h2>
-          <p className="text-slate-300 mb-4">{p.desc}</p>
-          <ul className="list-disc pl-6 grid gap-1 text-slate-200">
+          <h1 className="font-sans text-4xl font-extrabold mb-1 text-white">{p.title}</h1>
+          <h2 className="font-sans text-lg text-slate-200 mb-3">{p.subtitle}</h2>
+          <p className="font-sans text-slate-300 mb-4 leading-relaxed">{p.desc}</p>
+          <ul className="font-sans list-disc pl-6 grid gap-1 text-slate-200">
             {p.bullets.map((b) => (
-              <li key={b} className="mb-0.5">
-                {b}
-              </li>
+              <li key={b} className="mb-0.5">{b}</li>
             ))}
           </ul>
         </header>
 
         <div className="space-y-8">
           {p.sections.map((section) => (
-            <section key={section.title}>
-              <h3 className="text-xl font-bold mb-2 text-primary">{section.title}</h3>
-              <p className="text-slate-300 mb-2">{section.body}</p>
+            <section
+              key={section.title}
+              className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 shadow-lg"
+            >
+              <h3 className="font-sans text-xl font-bold mb-2 text-primary">{section.title}</h3>
+              <p className="font-sans text-slate-300 mb-2 leading-relaxed">{section.body}</p>
               {section.items && (
-                <ul className="list-disc pl-5 text-slate-200 space-y-1">
+                <ul className="font-sans list-disc pl-5 text-slate-200 space-y-1">
                   {section.items.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -243,13 +244,13 @@ export default function ProductDetail() {
         <div className="flex flex-wrap gap-3 pt-4">
           <a
             href="/#contacto"
-            className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-extrabold text-black hover:brightness-110"
+            className="inline-flex items-center rounded-xl bg-primary px-6 py-3 font-extrabold text-black shadow-md hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             Solicitar Cotización
           </a>
           <a
             href="/#productos"
-            className="inline-flex items-center rounded-lg border-2 border-primary px-6 py-3 font-extrabold text-primary hover:bg-primary hover:text-black"
+            className="inline-flex items-center rounded-xl border-2 border-primary px-6 py-3 font-extrabold text-primary hover:bg-primary hover:text-black shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             Volver a Productos
           </a>
