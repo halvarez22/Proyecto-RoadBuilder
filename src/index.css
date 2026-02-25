@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Grilla de espaciado: 4, 8, 16, 24, 32 px (Tailwind: 1, 2, 4, 6, 8) */
+:root {
+  color-scheme: dark;
+  --primary: 24 89% 54%;
+  --primary-hex: #f36f20;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg font-sans text-white antialiased;
+}
+
+/* Focus visible para accesibilidad: anillo naranja en enlaces y botones */
+@layer base {
+  a:focus-visible,
+  button:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg;
+  }
+}
