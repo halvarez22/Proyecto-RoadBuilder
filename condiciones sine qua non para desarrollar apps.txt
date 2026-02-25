@@ -1,0 +1,1 @@
+temas, 1.- la app sera un "SAAS" propongo usar firebase y vercel, tu que opinas?, 2.- es condicion " sine qua non" apegarnos a los estandares SQA (Software Quality assurance" y el "ISO/IEC 27034", 3.- debemos implementar "MCP" Model Context protocol!!! tienes claros los puntos tratados?
