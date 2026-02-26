@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion'
+import { useLanguage } from '../i18n'
 
 export default function Hero() {
+  const { lang } = useLanguage()
+  const isEn = lang === 'en'
+
   return (
     <section
       className="relative min-h-[calc(100vh-64px)] flex items-center bg-cover bg-center bg-no-repeat"
@@ -26,10 +30,14 @@ export default function Hero() {
           transition={{ duration: 0.5, delay: 0.15 }}
         >
           <h1 className="mt-2 font-sans text-4xl md:text-6xl font-black leading-tight tracking-tight text-slate-900">
-            Soluciones innovadoras para caminos y pavimentos
+            {isEn
+              ? 'Innovative solutions for roads and pavements'
+              : 'Soluciones innovadoras para caminos y pavimentos'}
           </h1>
           <p className="mt-3 font-sans text-lg font-bold leading-relaxed text-slate-900">
-            Mejorando los Caminos del Mundo con productos ecológicos, costo-efectivos y de alto desempeño.
+            {isEn
+              ? 'Improving the World’s Roads with eco-friendly, cost-effective and high-performance products.'
+              : 'Mejorando los Caminos del Mundo con productos ecológicos, costo-efectivos y de alto desempeño.'}
           </p>
         </motion.div>
         <motion.div
@@ -42,13 +50,13 @@ export default function Hero() {
             href="#contacto"
             className="inline-flex items-center rounded-xl border-2 border-primary bg-black/70 px-6 py-3 font-extrabold text-primary hover:bg-primary hover:text-black transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
           >
-            Solicite una Cotización
+            {isEn ? 'Request a Quote' : 'Solicite una Cotización'}
           </a>
           <a
             href="#productos"
             className="inline-flex items-center rounded-xl border-2 border-primary bg-black/70 px-6 py-3 font-extrabold text-primary hover:bg-primary hover:text-black transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
           >
-            Conozca los Productos
+            {isEn ? 'View Products' : 'Conozca los Productos'}
           </a>
         </motion.div>
       </div>

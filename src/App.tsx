@@ -3,6 +3,8 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
+import WhatsAppBubble from './components/WhatsAppBubble'
+import ChatBotBubble from './components/ChatBotBubble'
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <WhatsAppBubble />
+        <ChatBotBubble />
       </div>
     </BrowserRouter>
   )
