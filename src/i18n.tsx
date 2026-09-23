@@ -22,7 +22,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const setLang = (value: Lang) => {
     setLangState(value)
     window.localStorage.setItem('rb-lang', value)
+    document.documentElement.lang = value
   }
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
 
   return (
     <LanguageContext.Provider value={{ lang, setLang }}>
@@ -38,4 +43,3 @@ export function useLanguage() {
   }
   return ctx
 }
-

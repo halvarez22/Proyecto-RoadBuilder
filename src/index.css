@@ -2,7 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Grilla de espaciado: 4, 8, 16, 24, 32 px (Tailwind: 1, 2, 4, 6, 8) */
+/* Outfit self-hosted — pesos mínimos para first paint */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/outfit-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/outfit-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/outfit-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('/fonts/outfit-latin-800-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 900;
+  src: url('/fonts/outfit-latin-900-normal.woff2') format('woff2');
+}
+
 :root {
   color-scheme: dark;
   --primary: 24 89% 54%;
@@ -15,8 +52,14 @@ body,
   height: 100%;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
-  @apply bg-bg font-sans text-white antialiased;
+  @apply bg-bg font-sans text-white antialiased overflow-x-clip;
+  /* Espacio inferior para burbujas WhatsApp / chat en móvil */
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
 /* Focus visible para accesibilidad: anillo naranja en enlaces y botones */

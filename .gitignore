@@ -1,21 +1,27 @@
-# Dependencies
-node_modules/
-
-# Build
+﻿node_modules/
 dist/
 build/
 *.local
-
-# Env
 .env
 .env.local
 .env.*.local
-
-# IDE / OS
+.data/
+*API KEY*
+*API_KEY*
+*API-KEY*
+*api_key*
+*api-key*
+*GROQ*
+*groq*
+*.pem
+*.key
 .idea/
 .vscode/
+*.swp
 .DS_Store
 Thumbs.db
-
-# Logs
 *.log
+npm-debug.log*
+tsconfig.tsbuildinfo
+lighthouse-post*.json
+.vite/
