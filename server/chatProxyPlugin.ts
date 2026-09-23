@@ -1,11 +1,13 @@
 import type { Plugin, Connect } from 'vite'
 import { loadEnv } from 'vite'
-import { buildSystemPrompt } from '../src/lib/buildProductKnowledge'
 import fs from 'node:fs'
 import path from 'node:path'
+import { runChat, validateLeadFields } from './chatHandlers'
+import { createMemoryRateLimiter } from './rateLimit'
+import { DEFAULT_ALLOWED_ORIGINS, isAllowedOrigin } from './requestGuard'
 
 type ChatBody = {
-  messages?: { role: 'user' | 'assistant' | 'system'; content: string }[]
+  messages?: { role: 'user' | 'assistant'; content: string }[]
   lang?: 'es' | 'en'
 }
 
@@ -39,8 +41,29 @@ function sendJson(res: Connect.ServerResponse, status: number, data: unknown) {
   res.end(JSON.stringify(data))
 }
 
-function getApiKey(): string | undefined {
-  return process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY
+function clientKey(req: Connect.IncomingMessage): string {
+  const xf = req.headers['x-forwarded-for']
+  if (typeof xf === 'string' && xf.trim()) return xf.split(',')[0].trim()
+  return req.socket.remoteAddress || 'unknown'
+}
+
+function parseAllowedOrigins(raw: string | undefined): string[] {
+  const extra = (raw || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return [...new Set([...DEFAULT_ALLOWED_ORIGINS, ...extra])]
+}
+
+const chatLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 20 })
+const leadLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 10 })
+
+function getDeps() {
+  return {
+    apiKey: process.env.GROQ_API_KEY || '',
+    model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+    allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS),
+  }
 }
 
 async function handleChat(req: Connect.IncomingMessage, res: Connect.ServerResponse) {
@@ -54,58 +77,38 @@ async function handleChat(req: Connect.IncomingMessage, res: Connect.ServerRespo
     return
   }
 
-  const apiKey = getApiKey()
-  if (!apiKey) {
-    sendJson(res, 503, { error: 'Chat API key not configured on server' })
+  const deps = getDeps()
+  const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined
+  const referer = typeof req.headers.referer === 'string' ? req.headers.referer : undefined
+  const host = typeof req.headers.host === 'string' ? req.headers.host : ''
+  const isLoopbackHost = /^(127\.0\.0\.1|localhost)(:\d+)?$/i.test(host)
+  // Prod/Vercel: Origin/Referer obligatorio. Loopback: permite smoke sin Origin (Host local).
+  if (!isAllowedOrigin(origin, referer, deps.allowedOrigins) && !(isLoopbackHost && !origin && !referer)) {
+    sendJson(res, 403, { error: 'Forbidden origin' })
+    return
+  }
+
+  if (!chatLimiter.check(clientKey(req))) {
+    sendJson(res, 429, { error: 'Too many requests' })
     return
   }
 
   try {
     const body = (await readJsonBody(req)) as ChatBody
-    const lang = body.lang === 'en' ? 'en' : 'es'
-    const incoming = Array.isArray(body.messages) ? body.messages : []
-    const safeMessages = incoming
-      .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-      .map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }))
-      .slice(-12)
-
-    if (safeMessages.length === 0) {
-      sendJson(res, 400, { error: 'messages required' })
-      return
-    }
-
-    const payload = {
-      model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
-      temperature: 0.2,
-      max_tokens: 700,
-      messages: [{ role: 'system', content: buildSystemPrompt(lang) }, ...safeMessages],
-    }
-
-    const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    const result = await runChat({
+      messages: Array.isArray(body.messages) ? body.messages : [],
+      lang: body.lang === 'en' ? 'en' : 'es',
+      apiKey: deps.apiKey,
+      model: deps.model,
     })
-
-    if (!upstream.ok) {
-      const errText = await upstream.text()
-      sendJson(res, 502, { error: 'Upstream model error', detail: errText.slice(0, 300) })
+    if (!result.ok) {
+      sendJson(res, result.status, {
+        error: result.error,
+        detail: 'detail' in result ? result.detail : undefined,
+      })
       return
     }
-
-    const data = (await upstream.json()) as {
-      choices?: { message?: { content?: string } }[]
-    }
-    const reply = data.choices?.[0]?.message?.content?.trim() || ''
-    if (!reply) {
-      sendJson(res, 502, { error: 'Empty model reply' })
-      return
-    }
-
-    sendJson(res, 200, { reply })
+    sendJson(res, 200, { reply: result.reply })
   } catch {
     sendJson(res, 500, { error: 'Chat handler failure' })
   }
@@ -117,16 +120,25 @@ async function handleLead(req: Connect.IncomingMessage, res: Connect.ServerRespo
     return
   }
 
+  const deps = getDeps()
+  const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined
+  const referer = typeof req.headers.referer === 'string' ? req.headers.referer : undefined
+  const host = typeof req.headers.host === 'string' ? req.headers.host : ''
+  const isLoopbackHost = /^(127\.0\.0\.1|localhost)(:\d+)?$/i.test(host)
+  if (!isAllowedOrigin(origin, referer, deps.allowedOrigins) && !(isLoopbackHost && !origin && !referer)) {
+    sendJson(res, 403, { error: 'Forbidden origin' })
+    return
+  }
+  if (!leadLimiter.check(clientKey(req))) {
+    sendJson(res, 429, { error: 'Too many requests' })
+    return
+  }
+
   try {
     const body = (await readJsonBody(req)) as LeadBody
-    const name = String(body.name || '').trim().slice(0, 120)
-    const phone = String(body.phone || '').trim().slice(0, 40)
-    const email = String(body.email || '').trim().slice(0, 120)
-    const lang = body.lang === 'en' ? 'en' : 'es'
-    const note = String(body.note || '').trim().slice(0, 500)
-
-    if (name.length < 2 || phone.length < 7 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      sendJson(res, 400, { error: 'Invalid lead fields' })
+    const validated = validateLeadFields(body)
+    if (!validated.ok) {
+      sendJson(res, validated.status, { error: validated.error })
       return
     }
 
@@ -135,21 +147,15 @@ async function handleLead(req: Connect.IncomingMessage, res: Connect.ServerRespo
     const file = path.join(dir, 'leads.jsonl')
     const row = JSON.stringify({
       ts: new Date().toISOString(),
-      name,
-      phone,
-      email,
-      lang,
-      note: note || undefined,
+      name: validated.lead.name,
+      phone: validated.lead.phone,
+      email: validated.lead.email,
+      lang: validated.lead.lang,
+      note: validated.lead.note,
     })
     fs.appendFileSync(file, row + '\n', 'utf8')
 
-    sendJson(res, 200, {
-      ok: true,
-      message:
-        lang === 'en'
-          ? 'Thanks. Our sales team will contact you shortly.'
-          : 'Gracias. Nuestro equipo de ventas lo contactará en breve.',
-    })
+    sendJson(res, 200, { ok: true, message: validated.lead.message })
   } catch {
     sendJson(res, 500, { error: 'Lead handler failure' })
   }
@@ -169,10 +175,7 @@ function attach(middlewares: Connect.Server) {
   })
 }
 
-/**
- * Plugin Vite: Tools submitChat / submitLead (MCP-style) sin exponer la API key al bundle.
- * Nombre del archivo evita patrones *groq* del .gitignore.
- */
+/** Adaptador Vite: inyecta env → handlers puros. */
 export function chatProxyPlugin(): Plugin {
   return {
     name: 'roadbuilder-chat-proxy',
@@ -180,6 +183,7 @@ export function chatProxyPlugin(): Plugin {
       const env = loadEnv(config.mode, config.envDir || process.cwd(), '')
       if (env.GROQ_API_KEY) process.env.GROQ_API_KEY = env.GROQ_API_KEY
       if (env.GROQ_MODEL) process.env.GROQ_MODEL = env.GROQ_MODEL
+      if (env.ALLOWED_ORIGINS) process.env.ALLOWED_ORIGINS = env.ALLOWED_ORIGINS
     },
     configureServer(server) {
       attach(server.middlewares)

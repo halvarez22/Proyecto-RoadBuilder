@@ -30,12 +30,22 @@ Ejecutar en local (`npm run dev`) o preview (`npm run build && npm run preview`)
 - [ ] Botón RB abre chat; responde sobre productos sin inventar
 - [ ] Pregunta de precio → no da precio; ofrece ventas + formulario lead
 - [ ] Lead: nombre, teléfono, correo → mensaje de confirmación
+- [ ] Origin no permitido → 403 (probar solo en API); rate limit no deja spam infinito
 
 ## Seguridad rápida
 - [ ] DevTools: sin `console` con PII del formulario
 - [ ] View source / Network: CSP meta presente; Formspree y Maps permitidos
 - [ ] Sin API keys en el bundle cliente (`gsk_` no en assets JS)
+- [ ] `server/chatHandlers.ts` no contiene `process.env`
 
 ## Build
 - [ ] `npm run lint` exit 0
 - [ ] `npm run build` exit 0
+
+## Oleada 5 (Strangler) — local DoD
+- [ ] App canónica en raíz; sin HTML estático rival en `main`
+- [ ] Rama local `archive/static-legacy` existe (no push hasta orden)
+- [ ] README documenta env Vercel para chat
+- [ ] `/api/chat` responde en local con Origin válido
+- [ ] Formulario contacto sigue OK
+- [ ] **Push GitHub:** solo tras OK explícito del dueño

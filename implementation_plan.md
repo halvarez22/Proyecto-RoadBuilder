@@ -143,6 +143,8 @@
 Decisión explícita del usuario sobre estático + `deploy-app` (deprecar / migrar features / mantener legacy).  
 **Prohibido** big-bang en el mismo PR que 0–4.
 
+> **Plan APO completo (2026-09-23):** ver **§10** abajo. Ejecución **solo local** hasta aprobación de push a GitHub.
+
 ---
 
 ## 5. Zero Trust — documentación Formspree (si se elige)
@@ -174,7 +176,7 @@ Decisión explícita del usuario sobre estático + `deploy-app` (deprecar / migr
 | 1 | GROQ | **Se conserva para pruebas** — no rotar/eliminar en esta fase | Oleada 0 **DIFERIDA** (excepción explícita del dueño; riesgo ISO aceptado temporalmente) |
 | 2 | Formulario / mails | **Dejar como está** — se resolverá después | Oleada 1 (Tool + destino real) **DIFERIDA** |
 | 3 | Teléfonos | **Se quedan** los del sitio estático: `+524747421030`, `+524747421031` | Autorizados para `tel:` cuando se toque Contact/Footer |
-| 4 | Canónica | Pendiente confirmación formal; trabajo sigue en `rb-app/` | — |
+| 4 | Canónica | **SPA Vite en raíz de `Proyecto-RoadBuilder` + Vercel** (confirmación Oleada 5) | Estático HTML y `deploy-app` = legacy; no compiten en producción |
 | 5 | Baseline Lighthouse | Pendiente | Requerido antes/durante oleada 2 |
 
 **Estado ejecución:** Oleada 0+1 completa **DIFERIDA**.  
@@ -288,3 +290,134 @@ Decisión explícita del usuario sobre estático + `deploy-app` (deprecar / migr
 - [x] cardDesc = textos cortos del grid Home
 - [x] Secciones/bullets del detalle preservados
 
+
+---
+
+### 10.0 Aprobación del dueño + blindaje forense (2026-09-23)
+
+**Estado ejecución:** APROBADO — D1–D6 confirmados + 3 exigencias forenses.  
+**Push GitHub:** prohibido hasta orden explícita post–DoD local (D6).
+
+| Decisión | Valor |
+|---------|--------|
+| D1 Canónica SPA+Vercel | Sí |
+| D2 Archive HTML estático | Sí (`archive/static-legacy`) |
+| D3 Deprecar deploy-app | Sí |
+| D4 Brochures fuera del código app | Sí (`docs/assets` y/o rama archive) |
+| D5 Chat en Vercel | Sí |
+| D6 Push solo post-DoD local | Sí |
+
+**Exigencias forenses no negociables (obligatorias en 5.2 / 5.4):**
+
+1. **Anti-abuso `/api/chat`:** Origin/Referer allowlist **y** rate limit en memoria por IP (ventana corta). Ambos en adaptadores; lógica de límite en módulo puro inyectable.
+2. **`server/chatHandlers.ts` puro:** TypeScript agnóstico; **no** lee `process.env`. `apiKey`, `model`, orígenes y persistencia de lead se inyectan desde el adaptador (Vite o Vercel).
+3. **Sanitización archive:** Antes/al crear `archive/static-legacy`, verificar ausencia de `API KEY*.txt`, `.env.local` y blobs `gsk_` reales (menciones documentales `gsk_` en markdown OK). Evidencia en §10.10.
+
+---
+
+### 10.1 Contexto forense (hoy)
+
+| Superficie | Dónde está | Rol |
+|------------|------------|-----|
+| **SPA canónica** | Disco + `origin/main` + Vercel (`proyecto-road-builder.vercel.app`) — app en **raíz** (`src/`, `package.json`, `server/`) | Producción / desarrollo activo |
+| **Monorepo legacy** | Solo historial git rama `backup/rb-app-improved` (`index.html`, `tsw.html`, `main.js`, `rb-app/`, brochures, presentacion…) | Archivo; **no** debe volver a competir en `main` |
+| **`deploy-app/`** | Ausente en disco actual (era untracked; no está en GitHub canónico) | Legacy muerto salvo recuperación explícita |
+| **Carpeta `rb-app/` residual** | Puede existir en disco (p.ej. `node_modules` huérfanos) | Limpiar; no es la app canónica |
+
+**Gap producción conocido:** chat `/api/chat` y `/api/lead` viven en plugin Vite (`server/chatProxyPlugin.ts`) → **404 en Vercel**. Formspree (contacto) sí funciona en prod. Esto entra en Oleada 5 como **paridad prod** del strangler, no como feature nueva de marketing.
+
+### 10.2 Objetivo de negocio (no técnico)
+
+Una sola web oficial. Nada de “tres RoadBuilders”. Lo viejo se archiva. Lo nuevo (Vercel) debe poder hacer lo mismo que local en lo crítico (incluido el chatbot, con claves solo en servidor).
+
+### 10.3 Decisiones a confirmar (dueño) — checklist de aprobación APO
+
+Antes de código, el dueño confirma:
+
+| # | Pregunta | Propuesta por defecto (recomendada) |
+|---|----------|-------------------------------------|
+| D1 | ¿La canónica es la SPA en raíz + Vercel? | **Sí** |
+| D2 | ¿El HTML estático (`tsw.html`, `main.js`, etc.) se archiva y no se publica? | **Sí** — conservar solo en rama `archive/static-legacy` o tag; no en `main` |
+| D3 | ¿`deploy-app` se declara deprecado sin recuperar? | **Sí**, salvo que el dueño pida recuperar algo concreto |
+| D4 | ¿Brochures/PDF/PPT del monorepo se mueven a carpeta `docs/assets` o repo aparte? | **Fuera de `main` app** o `docs/` read-only; no bloquean strangler |
+| D5 | ¿Chatbot debe funcionar en Vercel en esta oleada? | **Sí** (paridad local↔prod) |
+| D6 | ¿Push a GitHub solo al cerrar DoD local? | **Sí** (orden del dueño 2026-09-23) |
+
+### 10.4 Amenazas / ASC (ISO 27034-1)
+
+| Amenaza | ASC |
+|---------|-----|
+| Publicar legacy por error (HTML viejo o `deploy-app`) | Una sola superficie en `main`; rama archive aislada; README “canónica = Vercel SPA” |
+| Exponer `GROQ_API_KEY` en cliente o en git | Solo env de Vercel / `.env.local`; cero `VITE_` para Groq; rotación sigue deuda aceptada |
+| PII de leads en logs de serverless | Mismo Anti-Data-Leak: no `console` de PII; lead a archivo/servicio acotado o Formspree |
+| Drift de copy entre archive y SPA | Archive = read-only; Resource `src/data/products.ts` única fuente viva |
+| `/api/*` abierto a abuso | Rate limit básico + validación Zero Trust en handler serverless |
+
+### 10.5 ARO — Chat en producción (si D5 = sí)
+
+| Ítem | Detalle |
+|------|---------|
+| Firma local hoy | `POST /api/chat`, `POST /api/lead` vía middleware Vite |
+| Dependencias | `GROQ_API_KEY`, `buildSystemPrompt` / products Resource, `submitChat`/`submitLead` clientes |
+| Efecto secundario | Vercel no ejecuta `configureServer` de Vite → 404 |
+| Paridad objetivo | Mismos contratos JSON; mismos tokens `[[COLLECT_LEAD]]`; Formspree contacto intacto |
+| Riesgo | Duplicar lógica; secretos en edge mal configurados |
+
+**Enfoque Strangler (atómico):**
+
+1. Extraer handlers a módulo compartido `server/chatHandlers.ts` (o `api/_lib/`) consumible por Vite plugin **y** por funciones Vercel.  
+2. Añadir `api/chat.ts` + `api/lead.ts` (Vercel Serverless) sin borrar el plugin local hasta smoke verde.  
+3. Configurar en Vercel (UI): `GROQ_API_KEY`, `GROQ_MODEL`, `VITE_FORMSPREE_ENDPOINT` (este último ya build-time).  
+4. Actualizar CSP `connect-src` si el origen de API cambia (mismo origen en Vercel → `'self'` basta).  
+5. Smoke local (`vite`) + `vercel dev` o deploy preview **antes** de push a `main` si el dueño lo pide; si trabajo es 100% local primero: smoke `vite` + checklist, push, verificar prod.
+
+### 10.6 Pasos de ejecución (orden estricto)
+
+| Paso | Concern | Acciones | Verificación |
+|------|---------|----------|--------------|
+| **5.0** | Aprobación APO | Dueño confirma D1–D6 | Checklist §10.3 marcado |
+| **5.1** | Inventario + limpieza disco | Documentar residual `rb-app/`; eliminar huérfanos no trackeados; no tocar secrets | `git status` limpio de basura; app arranca desde raíz |
+| **5.2** | Archive legacy | Crear rama `archive/static-legacy` desde `backup/rb-app-improved` (o tag); README en archive: “no usar en prod” | Rama/tag existe; `main` sin HTML estático competidor |
+| **5.3** | Documentación canónica | `README.md` raíz: qué es la app, env, smoke, Vercel; apuntar `docs/smoke.md` | README legible no técnico + técnico |
+| **5.4** | Chat serverless (D5) | Extracción + `api/chat` + `api/lead`; gemelo de prueba / checklist paridad | Local chat OK; preview/prod `/api/chat` ≠ 404 |
+| **5.5** | Env Vercel | Guía en README; dueño pega `GROQ_API_KEY` en dashboard | Chat prod responde; sin key en git |
+| **5.6** | Deprecar deploy-app | Nota en plan/README: no mantener; no reintroducir | Sin carpeta en `main` |
+| **5.7** | Smoke local DoD | Ejecutar `docs/smoke.md` + chat + form | Checklist firmado en plan |
+| **5.8** | Push GitHub | **Solo tras OK del dueño** | `main` en GitHub = local; Vercel redeploy; URL smoke |
+
+### 10.7 Criterios de aceptación (DoD Oleada 5)
+
+- [ ] Una sola app en `main` (SPA raíz); sin HTML estático de marketing paralelo
+- [ ] Legacy accesible solo vía `archive/*` o tag (no desplegado)
+- [ ] `deploy-app` no forma parte del producto canónico
+- [ ] README canónico + smoke actualizado
+- [ ] Chat funciona en **local y Vercel** (si D5=sí) sin key en bundle
+- [ ] Formspree contacto intacto
+- [ ] CSP no rota Maps/Formspree
+- [ ] Push a GitHub **explícitamente autorizado** tras DoD local
+
+### 10.8 Fuera de alcance (esta oleada)
+
+- Rotación GROQ (sigue deuda Oleada 0)
+- LCP lab &lt; 2.5 s
+- Cambiar destinatario Formspree a `avelasco@o3mexico.com` (operativo Formspree, no código)
+- Rediseño visual / nuevos productos
+- Migrar brochures a CMS
+
+### 10.9 Orden con el dueño (acordado)
+
+1. ~~Aprobar este APO (§10.3)~~ → **HECHO** (D1–D6 + 3 exigencias forenses)
+2. ~~Ejecutar 5.1–5.7 **en local**~~ → **HECHO** (código + archive + docs); falta key GROQ del dueño para smoke chat 200
+3. Demo / smoke con dueño ← **AQUÍ**
+4. **Entonces** commit + push a GitHub / Vercel (D6)
+
+### 10.10 Evidencia ejecución local (2026-09-23)
+
+- [x] Exigencia 1: Origin allowlist + rate limit (Vite + `api/*`); evil Origin → 403
+- [x] Exigencia 2: `server/chatHandlers.ts` sin lectura de `process.env` (inyección desde adaptadores)
+- [x] Exigencia 3: escaneo `archive/static-legacy` / backup — sin `.env.local` ni `API KEY*.txt`; `gsk_` solo docs
+- [x] Rama local `archive/static-legacy` + `ARCHIVE_README.md` en esa rama
+- [x] `README.md`, `docs/assets/`, `vercel.json`, `api/chat.ts`, `api/lead.ts`
+- [x] Formspree smoke 200
+- [ ] Chat 200 local: `.env.local` tiene `GROQ_API_KEY` vacío — **pegar clave y re-probar**
+- [ ] Push: **no ejecutado** (esperando orden post-DoD)

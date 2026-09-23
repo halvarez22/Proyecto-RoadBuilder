@@ -18,7 +18,7 @@ export default tseslint.config(
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['src/**/*.{ts,tsx}', 'server/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'server/**/*.{ts,tsx}', 'api/**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: {
