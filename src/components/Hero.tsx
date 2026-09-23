@@ -21,16 +21,16 @@ export default function Hero() {
           className="h-full w-full object-cover object-center"
         />
       </picture>
-      <div className="relative z-10 mx-auto max-w-[920px] w-full px-4 flex flex-col items-center text-center gap-3 sm:gap-4">
-        <div className="w-full max-w-[min(100%,280px)] sm:max-w-[340px] md:max-w-[420px] flex items-center justify-center">
+      <div className="relative z-10 mx-auto max-w-[1100px] w-full px-3 sm:px-4 flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
+        <div className="w-full max-w-[min(96vw,480px)] sm:max-w-[580px] md:max-w-[720px] lg:max-w-[820px] flex items-center justify-center -mt-2 sm:mt-0">
           <img
             src="/raod_builder_logo-removebg-preview.png"
             alt="RoadBuilder"
-            className="block w-full h-auto max-h-[140px] sm:max-h-[180px] md:max-h-[220px] object-contain drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
+            className="block w-full h-auto max-h-[260px] sm:max-h-[340px] md:max-h-[420px] lg:max-h-[500px] object-contain drop-shadow-[0_10px_36px_rgba(0,0,0,0.65)]"
           />
         </div>
         <div className="relative w-full max-w-[720px] rounded-2xl bg-white/20 backdrop-blur-sm px-4 py-3 sm:px-6 sm:py-4 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
-          <h1 className="mt-1 sm:mt-2 font-sans text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-slate-900">
+          <h1 className="mt-1 sm:mt-2 font-sans text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight text-slate-900">
             {isEn
               ? 'Innovative solutions for roads and pavements'
               : 'Soluciones innovadoras para caminos y pavimentos'}
