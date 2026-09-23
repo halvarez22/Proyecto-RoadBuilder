@@ -46,9 +46,11 @@ Checklist: [`docs/smoke.md`](docs/smoke.md)
 
 ## Legacy
 
-- HTML estático / monorepo antiguo: rama `archive/static-legacy` (no desplegar).
+- HTML estático / monorepo antiguo: rama `archive/static-legacy` (**no desplegar** en Vercel).
 - `deploy-app`: **deprecado**; no recuperar.
 - Brochures/PDF: ver `docs/assets/` o la rama archive.
+
+Vercel solo debe auto-desplegar **`main`** (`vercel.json` → `git.deploymentEnabled`).
 
 ## Seguridad (mínimo)
 

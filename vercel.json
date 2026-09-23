@@ -1,5 +1,12 @@
 {
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "archive/*": false,
+      "backup/*": false
+    }
+  }
 }
