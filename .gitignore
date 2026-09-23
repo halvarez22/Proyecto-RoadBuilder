@@ -11,6 +11,22 @@ build/
 .env.local
 .env.*.local
 
+# Leads capturados en dev (PII) — nunca versionar
+.data/
+rb-app/.data/
+
+# Secretos / API keys (prevención de commits accidentales)
+*API KEY*
+*API_KEY*
+*API-KEY*
+*api_key*
+*api-key*
+*GROQ*
+*groq*
+*GROQ*KEY*
+*.pem
+*.key
+
 # IDE / OS
 .idea/
 .vscode/
